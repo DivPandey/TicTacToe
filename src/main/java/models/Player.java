@@ -1,6 +1,7 @@
 package models;
 import java.util.*;
-class Player {
+
+public class Player {
     private String name;
     private Symbol symbol;
     private PlayerType playerType;

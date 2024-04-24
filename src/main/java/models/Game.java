@@ -1,4 +1,7 @@
 package models;
+import exceptions.InvalidMoveException;
+import strategies.WinningAlgorithm;
+
 import java.util.*;
 public class Game {
     private Board board;
@@ -7,6 +10,7 @@ public class Game {
     private GameState gameState;
     private Player winner;
     private int nextPlayerMoveIndex;
+    private WinningAlgorithm winningAlgorithm;
 
     public Game(int dimension, List<Player> players) {
         this.board = new Board(dimension);
@@ -15,7 +19,7 @@ public class Game {
         this.gameState = GameState.IN_PROGRESS;
         this.winner = null;
         this.nextPlayerMoveIndex = 0;
-
+        this.winningAlgorithm = new WinningAlgorithm();
     }
 
     public Board getBoard() {
@@ -79,5 +83,37 @@ public class Game {
         }
 
         return board.getBoard().get(row).get(col).getCellState().equals(CellState.EMPTY);
+    }
+
+    public void makeMove() throws InvalidMoveException {
+        Player currentPlayer = players.get(nextPlayerMoveIndex);
+
+        System.out.println("It is " + currentPlayer.getName() + "'s move.");
+
+        //Move that currentPlayer wants to make
+        Move move = currentPlayer.makeMove(board);
+
+        //Game will validate the move before executing.
+        if (!validateMove(move)) {
+            //throw an exception
+            throw new InvalidMoveException("Invalid move made by " + currentPlayer.getName());
+        }
+
+        int row = move.getCell().getRow();
+        int col = move.getCell().getCol();
+
+        Cell cellToChange = board.getBoard().get(row).get(col);
+        cellToChange.setPlayer(currentPlayer);
+        cellToChange.setCellState(CellState.FILLED);
+
+        Move finalMove = new Move(cellToChange, currentPlayer);
+        moves.add(finalMove);
+        nextPlayerMoveIndex = (nextPlayerMoveIndex + 1) % players.size();
+
+        //Check if the current move is the winning move or not.
+        if (winningAlgorithm.checkWinner(board, finalMove)) {
+            gameState = GameState.ENDED;
+            winner = currentPlayer;
+        }
     }
 }
